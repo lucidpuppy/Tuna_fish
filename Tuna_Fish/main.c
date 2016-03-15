@@ -27,7 +27,6 @@ float spudnut,donut;
 float delt;
 
 void Display_Raw(float accel[3],float gyro[3],float temp);
-void Init_Complementary(float rpy_c[3]);
 
 bool confirm_offsets(void);
 bool cfilter_en=false,kfilter_en=false;
@@ -35,21 +34,23 @@ bool cfilter_en=false,kfilter_en=false;
 void Attitude_c(float accel[3],float gyro[3], float rpy_c[3]);
 void Attitude_k(float accel[3],float gyro[3],float rpy_k[3]);
 
-float Roll_est,Roll_predict;
+void RemoveGravity(float ypr_k[3],float accel[3]);
+
+float Roll_est,Roll_predict;								//Estimated states and predicted states
 float Pitch_est,Pitch_predict;
 float Yaw_est,Yaw_predict;
 
-float P_est[2][2][3],P_predict[2][2][3];
+float P_est[2][2][3],P_predict[2][2][3];		//Process covariance matrix
 
-float Q_angle[3]={0.001,0.001,0},Q_bias[3]={0.003,0.003,0};
+float Q_angle[3]={0.001,0.001,0},Q_bias[3]={0.003,0.003,0};			//Process Noise covariance matrix
 
-float R_measurement[2]={0.003,0.003};
+float R_measurement[2]={0.003,0.003};														//Measurement noise covariance matrix
 
-float Gyro_Bias[3];
+float Gyro_Bias[3];																							//Gyro bias
 
-float Bomb[2];
+float Bomb[2];																									//innovation
 
-float K_gain[2][3];	
+float K_gain[2][3];																							//Kalman gain
 
 int main()
 {
@@ -57,6 +58,7 @@ int main()
 	BeginBasics();
 	Blink();
 	Enable_PeriphClock();
+	
 	/*Roll-0 Pitch-1 Yaw-2..Roll rotation around X axis.Pitch rotation around Y axis and Yaw rotation around Z axis
 	note: It does not mean rotation along the X Y or Z axis*/
 	
@@ -72,12 +74,12 @@ int main()
 	while(1)
 	{
 		MPU6050_GetRaw(&Accel[0],&Gyro[0],&Tempreature);
-		
+		if(Gyro[2]<0.3 && Gyro[2]>-0.3) Gyro[2]=0;
 		spudnut=tics();
 		delt=spudnut-donut;
 		donut=spudnut;
 		
-		//Display_Raw(Accel[0],Gyro[0],Tempreature);
+		//Display_Raw(Accel,Gyro,Tempreature);
 		
 		Attitude_k(Accel,Gyro,RPY_k);
 		
@@ -89,6 +91,7 @@ int main()
 		PrintFloat(RPY_k[0]);
 		PrintString("\t");
 		PrintFloat(1/delt);
+		
 	}
 }
 
@@ -209,6 +212,10 @@ void Attitude_k(float accel[3],float gyro[3],float rpy_k[3])
 	
 } /*End of fucntion*/
 
+void RemoveGravity(float ypr_l[3],float accel[3])
+{
+	accel[2]= accel[2];
+}
 
 void Display_Raw(float accel[3], float gyro[3], float temp)
 {

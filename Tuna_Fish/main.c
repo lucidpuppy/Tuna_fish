@@ -35,7 +35,7 @@ void RemoveGravity(float rpy_k[3],float accel[3],float accel_rw[3]);
 
 int main()
 {
-	SerialDebug(250000);
+	SerialDebug(250000);			//PrintString() and PrintFloat() using UART
 	BeginBasics();
 	Blink();
 	Enable_PeriphClock();
@@ -43,10 +43,11 @@ int main()
 	/*Roll-0 Pitch-1 Yaw-2..Roll rotation around X axis.Pitch rotation around Y axis and Yaw rotation around Z axis
 	note: It does not mean rotation along the X Y or Z axis*/
 	
-	float RPY_c[3],RPY_k[3];																
-	float Accel[3],Gyro[3],Tempreature;
-	float Accel_RealWorld[3];
-	while(Init_I2C(400)){PrintString("\nI2C Connection Error");}
+	float RPY_c[3],RPY_k[3];					//RPY_c and RPY_k..Roll pitch and yaw obtained from complemntary filter and kalman filter													
+	float Accel[3],Gyro[3],Tempreature;			//raw values
+	float Accel_RealWorld[3];					//Real World Acceleration
+
+	while(Init_I2C(400)){PrintString("\nI2C Connection Error");}	
 	while(MPU6050_Init()){PrintString("MPU6050 Initialization Error");}
 	MPU6050_UpdateOffsets(&MPU6050_Offsets[0]);
 	//MPU6050_ConfirmOffsets(&MPU6050_Offsets[0]);
@@ -71,8 +72,9 @@ int main()
 	{
 		MPU6050_GetRaw(&Accel[0],&Gyro[0],&Tempreature);	//Reads MPU6050 Raw Data Buffer..i.e Accel Gyro and Tempreature values
 
-		if(Gyro[2]<0.3 && Gyro[2]>-0.3) Gyro[2]=0;
-		spudnut=tics();
+		if(Gyro[2]<0.3 && Gyro[2]>-0.3) Gyro[2]=0;			//this actually reduces Yaw drift..will add magnetometer soon
+
+		spudnut=tics();										//tics() return current timing info..using SysTick running at CPU_Core_Frequency/8..Counter Runs from 0xFFFFFF to 0 therefore overflows every 1.864135 secs
 		delt=spudnut-donut;									//small time dt
 		donut=spudnut;											
 		

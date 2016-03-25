@@ -13,7 +13,7 @@
 #define AccelY_offset -1697
 #define AccelZ_offset 1575
 
-volatile unsigned int *DWT_CTRL= 		(volatile unsigned int *) 0xE0001000;
+volatile unsigned int *DWT_CTRL= 	(volatile unsigned int *) 0xE0001000;
 volatile unsigned int *DWT_CYCCNT=  (volatile unsigned int *) 0xE0001004;
 volatile unsigned int *SCB_DEMCR= 	(volatile unsigned int *) 0xE000EDFC;
 
@@ -51,15 +51,16 @@ int main()
 	MPU6050_UpdateOffsets(&MPU6050_Offsets[0]);
 	//MPU6050_ConfirmOffsets(&MPU6050_Offsets[0]);
 	
-	while(0)
+	while(0)						//to play around with quaternions and vector rotation
 	{
 		float vector[3]= {1,0,0};
-		float axis_vector[3]= {0,1,0};
-		float rot_angle=90;
+		float axis_vector[3]= {0,1,0};		//rotate around Y axis
+		float rot_angle=90;					//with 90 degrees
 		
 		Quaternion q;
 		
-		q=RotateVectorY(vector,rot_angle);
+		q=RotateVectorY(vector,rot_angle);	//Rotates vector around Y axis with rot_angle
+
 		PrintString("\nRotated Vector's Quaternion\t");
 		DisplayQ(q);
 		
@@ -68,15 +69,16 @@ int main()
 	
 	while(1)
 	{
-		MPU6050_GetRaw(&Accel[0],&Gyro[0],&Tempreature);
+		MPU6050_GetRaw(&Accel[0],&Gyro[0],&Tempreature);	//Reads MPU6050 Raw Data Buffer..i.e Accel Gyro and Tempreature values
+
 		if(Gyro[2]<0.3 && Gyro[2]>-0.3) Gyro[2]=0;
 		spudnut=tics();
-		delt=spudnut-donut;
-		donut=spudnut;
+		delt=spudnut-donut;									//small time dt
+		donut=spudnut;											
 		
 		//Display_Raw(Accel,Gyro,Tempreature);
 		
-		Attitude_k(Accel,Gyro,RPY_k,delt);
+		Attitude_k(Accel,Gyro,RPY_k,delt);	//Estimates YPR using Kalman
 		
 		
 		PrintString("\nYPR\t");
@@ -87,7 +89,7 @@ int main()
 		PrintFloat(RPY_k[0]);
 		
 		RemoveGravity(RPY_k,Accel,Accel_RealWorld);
-		PrintString("\tReal World Accel with Gravity\t");								//still a glitch..working on it
+		PrintString("\tReal World Accel with Gravity\t");			//still glitchish..working on it
 		DisplayVector(Accel_RealWorld);
 		
 		PrintString("\t");
@@ -106,10 +108,10 @@ void RemoveGravity(float rpy_k[3],float accel[3],float accel_rw[3])
 	Quaternion Q=RotateVector3D(accel,rpy_k[2],rpy_k[1],rpy_k[0]);
 	accel_rw[0]=Q.axis[0];
 	accel_rw[1]=Q.axis[1];
-	accel_rw[2]=Q.axis[2];
+	accel_rw[2]=Q.axis[2];						//Subtract 1 to remove gravity, still not good ..with yaw movements..*working on it
 }
 
-void Display_Raw(float accel[3], float gyro[3], float temp)
+void Display_Raw(float accel[3], float gyro[3], float temp)		//Display raw Accel Gyro and Tempreature Values
 {
 	PrintString("\nAccel\tTemp\tGyro\t");
 	
@@ -129,7 +131,7 @@ void Display_Raw(float accel[3], float gyro[3], float temp)
 	}
 }
 
-void DisplayVector(float vector[3])
+void DisplayVector(float vector[3])				//Display array with 3 elements
 {
 	PrintString("<");
 	PrintFloat(vector[0]);

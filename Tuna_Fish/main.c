@@ -36,21 +36,21 @@ void Attitude_k(float accel[3],float gyro[3],float rpy_k[3]);
 
 void RemoveGravity(float ypr_k[3],float accel[3]);
 
-float Roll_est,Roll_predict;								//Estimated states and predicted states
+float Roll_est,Roll_predict;										//Estimated states and predicted states
 float Pitch_est,Pitch_predict;
 float Yaw_est,Yaw_predict;
 
-float P_est[2][2][3],P_predict[2][2][3];		//Process covariance matrix
+float P_est[2][2][3],P_predict[2][2][3];							//Process covariance matrix
 
 float Q_angle[3]={0.001,0.001,0},Q_bias[3]={0.003,0.003,0};			//Process Noise covariance matrix
 
-float R_measurement[2]={0.003,0.003};														//Measurement noise covariance matrix
+float R_measurement[2]={0.003,0.003};								//Measurement noise covariance matrix
 
-float Gyro_Bias[3];																							//Gyro bias
+float Gyro_Bias[3];													//Gyro bias
 
-float Bomb[2];																									//innovation
+float Bomb[2];														//innovation
 
-float K_gain[2][3];																							//Kalman gain
+float K_gain[2][3];													//Kalman gain
 
 int main()
 {
@@ -113,10 +113,10 @@ void Attitude_c(float accel[3],float gyro[3],float rpy_c[3])
 	}
 	
 	float accel_roll=atan2(accel[1],accel[2]) * rad_to_deg;     //calculates from accelerometer readings
-  float accel_pitch=atan2(-accel[0],sqrt(accel[1]*accel[1] + accel[2]*accel[2])) * rad_to_deg;
+    float accel_pitch=atan2(-accel[0],sqrt(accel[1]*accel[1] + accel[2]*accel[2])) * rad_to_deg;
 	
 	rpy_c[0]= 0.93 * (rpy_c[0] + gyro[0]*delt) + 0.07*accel_roll;
-  rpy_c[1]= 0.93 * (rpy_c[1] + gyro[1]*delt) + 0.07*accel_pitch;
+    rpy_c[1]= 0.93 * (rpy_c[1] + gyro[1]*delt) + 0.07*accel_pitch;
 	rpy_c[2]= 				rpy_c[2] + gyro[2]*delt;
 	/*
 	PrintString("\nPitch and Roll\t");
@@ -140,7 +140,7 @@ void Attitude_k(float accel[3],float gyro[3],float rpy_k[3])
 																								//Previous_State + (Gyro_reading - Gyro_bias)delT..previous state updated with corrected gyro angular rate
 	Roll_predict=  Roll_est  + (gyro[0]- Gyro_Bias[0])  * delt;
 	Pitch_predict= Pitch_est + (gyro[1]- Gyro_Bias[1])  * delt;
-	Yaw_predict= 	 Yaw_est   + (gyro[2]- Gyro_Bias[2])  * delt;
+	Yaw_predict=   Yaw_est   + (gyro[2]- Gyro_Bias[2])  * delt;
 																								//No prediction for Gyro Bias..it'll be updated by measurement..no direct mesurement possible for gyro bias..it uses measured data to find the drift
 	
 	/*Prediction of the Process Covariance matrix [P_predict= A* P_prev * A transpose + Q ] where Q is Process Noise Covariance Matrix..

@@ -17,7 +17,8 @@ float Gyro_Bias[3];																							//Gyro bias
 
 float Bomb[2];																									//Innovation
 
-float K_gain[2][3];																							//Kalman gain
+float K_gain[2][3];		//Kalman gain
+
 
 void Attitude_c(float accel[3],float gyro[3],float rpy_c[3],float delt)
 {
@@ -76,8 +77,41 @@ void Attitude_k(float accel[3],float gyro[3],float rpy_k[3], float delt)
 	this gets unreliable if there is acceleration in axis prependicular to gravitational axis*/
 	
 	float rpy_measured[2];
-	rpy_measured[0]= atan2(accel[1],accel[2]) * rad_to_deg;
-	rpy_measured[1]= atan2(-accel[0],sqrt(accel[1]*accel[1] + accel[2]*accel[2])) * rad_to_deg;
+	
+	float total_Accel = sqrt(accel[0]*accel[0] + accel[1]*accel[1] + accel[2]*accel[2]); //net acceleration vector.
+	float inverted_Accel = 1/total_Accel;//this is because it doesn't make sense to divide twice as division takes more time
+	
+	if(abs(accel[1])<total_Accel-0.001)//just making sure the value of the acceleration isn't more than what the asin function can handle
+	{
+		rpy_measured[0]= asin(accel[1]*inverted_Accel) * rad_to_deg;//this method is faster and mathematically equivalent
+	}
+	if(abs(accel[0])<total_Accel-0.001)
+	{
+		rpy_measured[1]= asin(-accel[0]*inverted_Accel) * rad_to_deg;
+	}
+	/*
+	The problem with the previous implementation was that if the system were to be put through a huge acceleration
+	(say for example, a drone going in one direction and then suddenly going in the opposite direction, like in a racing drone),
+	the measured value of the angles would be wayyy off. this would increase the "bomb" and since the R_measurement hasn't increased,
+	The Kalman gain would throw off the estimates like a fat girl on a swing and not realize it. 
+	I know this because it happened to me(not the fat girl on the swing).
+	You need a variable R_measurement. To make the R_measurement variable, we must know when the Error is supposed to be high and when
+	it is supposed to be low. If the total acceleration is equal to that of gravity, the error in the angle measurement is the least, 
+	so the value of the least error is 0.003(set by pundoobvi) and the value of the max error (when the total acceleration is not 9.8)
+	is..... IDK what it should be so I have currently kept it as 1+0.003. To find the R_measurement, I use a "notch filter" 
+	Notch(x) =    
+		x^2
+	-------------------
+	( 1 	 +     x^2)
+	visualisation : http://www.wolframalpha.com/input/?i=x%5E2%2F(1%2Bx%5E2)
+	The notch filter can be centered at x = 9.8 simply by subtracting 9.81 from x
+	This way, the R_measurement will increase the moment the system accelerates and the system will never diverge too far away from
+	the true value. 
+	*/
+	
+	total_Accel = total_Accel - 9.81;//subtract gravity from the total acceleration to center the notch filter at 9.81
+	R_measurement[0] = R_measurement[1] = ((total_Accel*total_Accel)/(1+total_Accel*total_Accel)) + 0.003;
+
 	
 	/*Computing Kalman Gain..which we can say is 
 	             Error in prediction
